@@ -5,7 +5,7 @@ from telethon import TelegramClient
 from loguru import logger
 from natasha import Segmenter, NewsEmbedding, NewsNERTagger, Doc
 
-async def get_inf_from_bot(client: TelegramClient, numbers: list[str] | list[int]) -> tuple[list[str], list[str]]:
+async def get_inf_from_bot(client: TelegramClient, numbers: list[str] | list[int]) -> tuple[list[str], list[str], list[str]]:
     names, mails, tg = [], [], []
     
     try:
@@ -83,5 +83,5 @@ def extract_names_mail(text: str) -> tuple[list[str], list[str]]:
     return names, mails
 
 
-def make_url(number: str):
+def make_url(number: str) -> str:
     return f'https://t.me/+{number}'
