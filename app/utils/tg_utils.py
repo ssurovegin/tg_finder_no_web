@@ -7,6 +7,7 @@ from natasha import Segmenter, NewsEmbedding, NewsNERTagger, Doc
 
 async def get_inf_from_bot(client: TelegramClient, numbers: list[str] | list[int]) -> tuple[list[str], list[str]]:
     names, mails, tg = [], [], []
+    
     try:
         async with client.conversation(os.getenv('BOT_UNAME'), max_messages=200, timeout=5) as conv:
             logger.debug('Диалог с ботом открыт')
@@ -22,21 +23,37 @@ async def get_inf_from_bot(client: TelegramClient, numbers: list[str] | list[int
 
                 msg_history = []
 
-                async for msg in client.iter_messages(bot, limit=5):
+                async for msg in client.iter_messages(bot, limit=6):
                     msg_history.append(msg.text)
                 logger.debug('История сообщение получена')
+
+                found = False
 
                 for msg in msg_history:
                     first_w = msg.split(' ')[0]
 
                     if first_w == '📱':
+                        found = True
+
                         n, m = extract_names_mail(msg)
-                        names.append(n)
-                        mails.append(m)
+                        if len(n) > 0:
+                            names.append(n)
+                        else: 
+                            names.append('Не найдено')
+                        
+                        if len(m) > 0:
+                            mails.append(m)
+                        else:
+                            mails.append('Не найдено')
                         
                         logger.debug('Ответ для добавления получен')
 
                         break
+                
+                if not found:
+                    names.append('Не найдено')
+                    mails.append('Не найдено')
+
                 tg.append(make_url(num))
 
     except Exception as e:
