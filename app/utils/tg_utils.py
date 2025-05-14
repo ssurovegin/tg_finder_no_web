@@ -22,7 +22,7 @@ async def get_inf_from_bot(client: TelegramClient, numbers: list[str] | list[int
 
                 msg_history = []
 
-                async for msg in client.iter_messages(bot, limit=4):
+                async for msg in client.iter_messages(bot, limit=5):
                     msg_history.append(msg.text)
                 logger.debug('История сообщение получена')
 
