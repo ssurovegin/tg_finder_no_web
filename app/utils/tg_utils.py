@@ -1,30 +1,40 @@
 import os
 import re
+import asyncio
 
 from telethon import TelegramClient
 from loguru import logger
 from natasha import Segmenter, NewsEmbedding, NewsNERTagger, Doc
 
-async def get_inf_from_bot(client: TelegramClient, numbers: list[str] | list[int]) -> tuple[list[str], list[str], list[str]]:
+async def get_inf_from_bot(client: TelegramClient, numbers: list[str] | list[int]) -> tuple[list[str], list[str]]:
     names, mails, tg = [], [], []
     
     try:
         async with client.conversation(os.getenv('BOT_UNAME'), max_messages=200, timeout=5) as conv:
             logger.debug('Диалог с ботом открыт')
 
+            bot = await client.get_entity(str(os.getenv('BOT_UNAME')))
+            logger.debug('Бот найден')
+
             for num in numbers:
                 logger.debug('Отправка сообщения')
-
                 await conv.send_message(str(num))
                 logger.debug('Сообщение успешно отправлено')
 
-                bot = await client.get_entity(str(os.getenv('BOT_UNAME')))
-                logger.debug('Бот найден')
-
                 msg_history = []
+                
+                updated = False
+                while not updated:
 
-                async for msg in client.iter_messages(bot, limit=6):
-                    msg_history.append(msg.text)
+                    async for msg in client.iter_messages(bot, limit=1):
+                        if msg.text == str(num):
+                            await asyncio.sleep(1)
+                        
+                        else:
+                            await asyncio.sleep(1)
+                            async for msg in client.iter_messages(bot, from_user=bot, limit=3):
+                                msg_history.append(msg.text)
+                                updated = True
                 logger.debug('История сообщение получена')
 
                 found = False
@@ -83,5 +93,5 @@ def extract_names_mail(text: str) -> tuple[list[str], list[str]]:
     return names, mails
 
 
-def make_url(number: str) -> str:
+def make_url(number: str):
     return f'https://t.me/+{number}'
