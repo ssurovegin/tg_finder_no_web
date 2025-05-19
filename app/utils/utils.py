@@ -50,7 +50,5 @@ async def find(client: TelegramClient, file_path: str, res_path: str) -> None:
     df.to_csv(res_path, index=False)
     logger.debug('Файл сохранен')
 
-    return None
-
 
 
