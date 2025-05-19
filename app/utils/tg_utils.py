@@ -1,19 +1,26 @@
 import os
 import re
 import asyncio
+import sys
 
+from dotenv import find_dotenv, load_dotenv
 from telethon import TelegramClient
 from loguru import logger
 from natasha import Segmenter, NewsEmbedding, NewsNERTagger, Doc
+
+
+load_dotenv(find_dotenv(), override=True)
+BOT_UNAME = os.getenv('BOT_UNAME')
+SESSION_PATH = os.getenv('SESSION_PATH') + '.session'
 
 async def get_inf_from_bot(client: TelegramClient, numbers: list[str] | list[int]) -> tuple[list[str], list[str]]:
     names, mails, tg = [], [], []
     
     try:
-        async with client.conversation(os.getenv('BOT_UNAME'), max_messages=200, timeout=5) as conv:
+        async with client.conversation(BOT_UNAME, max_messages=200, timeout=5) as conv:
             logger.debug('Диалог с ботом открыт')
 
-            bot = await client.get_entity(str(os.getenv('BOT_UNAME')))
+            bot = await client.get_entity(BOT_UNAME)
             logger.debug('Бот найден')
 
             for num in numbers:
@@ -32,7 +39,7 @@ async def get_inf_from_bot(client: TelegramClient, numbers: list[str] | list[int
                         
                         else:
                             await asyncio.sleep(1)
-                            async for msg in client.iter_messages(bot, from_user=bot, limit=3):
+                            async for msg in client.iter_messages(bot, from_user=bot, limit=4):
                                 msg_history.append(msg.text)
                                 updated = True
                 logger.debug('История сообщение получена')
@@ -67,9 +74,14 @@ async def get_inf_from_bot(client: TelegramClient, numbers: list[str] | list[int
                 tg.append(make_url(num))
 
     except Exception as e:
-        logger.error('Не удалось открыть диалог с ботом')
-        raise e
-    
+        logger.error('Не удалось открыть диалог с ботом, скорее всего, проблема с ключом')
+
+        await close_connection(client, SESSION_PATH)
+
+        sys.exit(1)
+
+    await close_connection(client, SESSION_PATH)
+
     return names, mails, tg
 
 
@@ -95,3 +107,9 @@ def extract_names_mail(text: str) -> tuple[list[str], list[str]]:
 
 def make_url(number: str):
     return f'https://t.me/+{number}'
+
+
+async def close_connection(client: TelegramClient, session_path: str) -> None:
+    await client.disconnect()
+    logger.warning('Соединение закрыто')        
+
